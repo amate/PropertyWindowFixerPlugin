@@ -1,0 +1,5 @@
+;LIBRARY audio_filter
+
+EXPORTS
+	GetFilterTable @1
+
