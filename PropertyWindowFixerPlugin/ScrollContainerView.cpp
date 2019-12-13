@@ -1,6 +1,7 @@
 
 #include "pch.h"
 #include "ScrollContainerView.h"
+#include <cstdint>
 
 
 CScrollConteinerView::CScrollConteinerView() : m_propertyWindow(this, 1)
@@ -168,6 +169,15 @@ LRESULT CScrollConteinerView::OnDelayInvalidateRect(UINT /*uMsg*/, WPARAM /*wPar
 
 void CScrollConteinerView::OnPropertySize(UINT nType, CSize size)
 {
+#if 0
+	// プロパティウィンドウが一定以上の縦幅にならないため、強制的に幅を広げる措置
+	// SWP_NOSENDCHANGING を指定することによって、幅の制限を防ぐ
+	if (size.cy >= 1000) {	
+		size.cy = 2000;
+	}
+#endif
+	m_propertyWindow.SetWindowPos(NULL,0, 0, size.cx, size.cy, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOSENDCHANGING);
+
 	enum { kBufferSize = 128 };
 	CString propertyTitle;
 	m_propertyWindow.GetWindowText(propertyTitle.GetBuffer(kBufferSize), kBufferSize);
@@ -177,6 +187,12 @@ void CScrollConteinerView::OnPropertySize(UINT nType, CSize size)
 
 	SetScrollSize(size, FALSE, false);
 	PostMessage(WM_DELAY_INVALIDATERECT);
+}
+
+// 拡張編集側でのプロパティウィンドウのサイズ制限を抑止するために、WM_WINDOWPOSCHANGINGメッセージを横取りする
+LRESULT CScrollConteinerView::OnPropertyWindowPosChanging(UINT, WPARAM, LPARAM, BOOL&)
+{
+	return 0;
 }
 
 LRESULT CScrollConteinerView::OnPropertyMouseWheel(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)

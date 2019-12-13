@@ -1,0 +1,7 @@
+// ヒント ファイルは、Visual Studio IDE が Visual C++ 識別子を解釈するのに役立ちます
+// 関数およびマクロの名前などです。
+// 詳細については次を参照してください https://go.microsoft.com/fwlink/?linkid=865984
+#define NULL
+#define NULL ((void *)0)
+#define IDR_MAINFRAME
+#define DECLARE_FRAME_WND_CLASS(WndClassName, uCommonResourceID) static WTL::CFrameWndClassInfo& GetWndClassInfo() { static WTL::CFrameWndClassInfo wc = { { sizeof(WNDCLASSEX), 0, StartWindowProc, 0, 0, NULL, NULL, NULL, (HBRUSH)(COLOR_WINDOW + 1), NULL, WndClassName, NULL }, NULL, NULL, IDC_ARROW, TRUE, 0, _T(""), uCommonResourceID }; return wc; }

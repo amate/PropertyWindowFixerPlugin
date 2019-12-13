@@ -5,7 +5,8 @@
 #pragma once
 
 
-class CScrollConteinerView : public CScrollWindowImpl<CScrollConteinerView>
+class CScrollConteinerView : 
+	public CScrollWindowImpl<CScrollConteinerView>
 {
 public:
 	//DECLARE_WND_CLASS(NULL)
@@ -39,6 +40,7 @@ public:
 		CHAIN_MSG_MAP(CScrollWindowImpl<CScrollConteinerView>)
 	ALT_MSG_MAP(1)
 		MSG_WM_SIZE(OnPropertySize)
+		MESSAGE_HANDLER(WM_WINDOWPOSCHANGING, OnPropertyWindowPosChanging)
 		MESSAGE_HANDLER(WM_MOUSEWHEEL, OnPropertyMouseWheel)
 	END_MSG_MAP()
 
@@ -53,6 +55,7 @@ public:
 	LRESULT OnDelayInvalidateRect(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 	void OnPropertySize(UINT nType, CSize size);
+	LRESULT OnPropertyWindowPosChanging(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnPropertyMouseWheel(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 private:
