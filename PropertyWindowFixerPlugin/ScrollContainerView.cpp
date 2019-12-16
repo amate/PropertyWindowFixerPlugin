@@ -3,8 +3,12 @@
 #include "ScrollContainerView.h"
 #include <cstdint>
 
+#include <shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
 
-CScrollConteinerView::CScrollConteinerView() : m_propertyWindow(this, 1)
+extern HMODULE g_hModule;
+
+CScrollConteinerView::CScrollConteinerView() : m_bDebug(false), m_propertyWindow(this, 1)
 {
 }
 
@@ -119,6 +123,12 @@ void CScrollConteinerView::DoScroll(int nType, int nScrollCode, int& cxyOffset, 
 
 int CScrollConteinerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
+	WCHAR debugFilePath[MAX_PATH];
+	::GetModuleFileName(g_hModule, debugFilePath, MAX_PATH);
+	::PathRemoveFileSpec(debugFilePath);
+	::PathAppend(debugFilePath, L"PropertyWindowFixerPluginDebug");
+	m_bDebug = ::PathFileExists(debugFilePath) != 0;
+
 	const DWORD currentThreadId = ::GetCurrentThreadId();
 	HWND hwnd = ::FindWindowEx(NULL, NULL, L"ExtendedFilterClass", nullptr);
 	if (hwnd != NULL) {
@@ -151,11 +161,16 @@ int CScrollConteinerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CScrollConteinerView::OnDestroy()
 {
 	if (m_propertyWindow.IsWindow()) {
-		m_propertyWindow.ModifyStyle(0, WS_CAPTION);
-		m_propertyWindow.SetParent(NULL);
-		m_propertyWindow.SetWindowPos(NULL, m_rcLastPropertyWindowPos.left, m_rcLastPropertyWindowPos.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
+		CWindow propertyWindow = m_propertyWindow;
 		m_propertyWindow.UnsubclassWindow();
+
+		CRect rcNowPropertyWindowRect;
+		propertyWindow.GetWindowRect(&rcNowPropertyWindowRect);
+
+		propertyWindow.ModifyStyle(0, WS_CAPTION);
+		propertyWindow.SetParent(NULL);
+		propertyWindow.SetWindowPos(NULL, m_rcLastPropertyWindowPos.left, m_rcLastPropertyWindowPos.top, rcNowPropertyWindowRect.Width(), rcNowPropertyWindowRect.Height(), SWP_NOZORDER);
+
 	}
 
 }
@@ -163,6 +178,11 @@ void CScrollConteinerView::OnDestroy()
 LRESULT CScrollConteinerView::OnDelayInvalidateRect(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	m_propertyWindow.Invalidate();
+	if (m_bDebug) {
+		Invalidate();
+		UpdateWindow();
+		m_propertyWindow.UpdateWindow();
+	}
 	return 0;
 }
 

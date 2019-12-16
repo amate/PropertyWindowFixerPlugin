@@ -59,6 +59,7 @@ public:
 	LRESULT OnPropertyMouseWheel(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
 private:
+	bool	m_bDebug;
 
 	CContainedWindow	m_propertyWindow;
 	CRect	m_rcLastPropertyWindowPos;

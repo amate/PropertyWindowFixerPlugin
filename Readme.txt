@@ -44,5 +44,13 @@ http://sourceforge.net/projects/wtl/
 
 ■更新履歴
 
+v1.2
+・[fix]設定ダイアログ画面サイズ固定化プラグインを非表示にしたときに、設定ダイアログの大きさがリストアされないのを修正
+・[add]PropertyWindowFixerPlugin.aufと同じフォルダにPropertyWindowFixerPluginDebugファイルが存在する時にデバッグ動作させるようにした。
+(短時間切り替えで表示アイテムが消える問題が、こちらの環境では再現しないので効果があるかどうかは分からない…)
+
+v1.1
+・[change]拡張編集側でのプロパティウィンドウのサイズ制限を抑止するために、WM_WINDOWPOSCHANGINGメッセージを横取りするようにした
+
 v1.0
 ・完成
