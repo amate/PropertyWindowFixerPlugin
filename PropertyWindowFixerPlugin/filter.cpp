@@ -9,7 +9,7 @@
 #include "ScrollContainerView.h"
 
 #define PLUGIN_NAME "設定ダイアログ画面サイズ固定化プラグイン"
-#define PLUGIN_VERSION "1.2"
+#define PLUGIN_VERSION "2.0"
 
 
 #define	WINDOW_W		540
@@ -91,13 +91,15 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void* e
 	{
 		bool isDisp = fp->exfunc->is_filter_window_disp(fp) != 0;
 		if (isDisp) {
-			g_scrollContainerView.Create(hwnd, CScrollConteinerView::rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_HSCROLL | WS_VSCROLL, WS_EX_CLIENTEDGE);
+			::ShowWindow(hwnd, SW_HIDE);
+			g_scrollContainerView.SubclassWindow();
 
-			UpdateLayout(hwnd);
+			//UpdateLayout(hwnd);
 
 		} else {
 			if (g_scrollContainerView.IsWindow()) {
-				g_scrollContainerView.DestroyWindow();
+				//g_scrollContainerView.DestroyWindow();
+				g_scrollContainerView.UnsubclassWindow();
 			}
 		}
 
@@ -105,7 +107,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void* e
 		break;
 
 	case WM_SIZE:
-		UpdateLayout(hwnd);
+		//UpdateLayout(hwnd);
 		break;
 
 
@@ -114,7 +116,8 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void* e
 
 	case WM_FILTER_EXIT:	// 終了直前に送られます
 		if (g_scrollContainerView.IsWindow()) {
-			g_scrollContainerView.DestroyWindow();
+			//g_scrollContainerView.DestroyWindow();
+			g_scrollContainerView.UnsubclassWindow();
 		}
 		break;
 
