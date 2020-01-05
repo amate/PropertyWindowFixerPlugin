@@ -29,6 +29,8 @@ public:
 		kEvalcxMargin = 5,
 
 		kcxScrollLine = 20,
+
+		ID_COMMAND_FILTERPLUS = 0x453,
 	};
 
 	CScrollConteinerView();
@@ -56,6 +58,7 @@ public:
 		MSG_WM_PAINT(OnPaint)
 		MSG_WM_TIMER(OnTimer)
 
+		COMMAND_ID_HANDLER(ID_COMMAND_FILTERPLUS, OnFilterPlus)
 		MESSAGE_HANDLER(WM_RBUTTONDOWN, OnRButtonDown)
 		MESSAGE_HANDLER(WM_INITMENU, OnInitMenu)
 		MESSAGE_HANDLER(WM_DELAY_CORRECTMENUPOSITION, OnDelayCorrectMenuPosition)		
@@ -87,6 +90,7 @@ public:
 	void OnPaint(CDCHandle dc);
 	void OnTimer(UINT_PTR nIDEvent);
 
+	LRESULT OnFilterPlus(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnRButtonDown(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnInitMenu(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnDelayCorrectMenuPosition(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -121,6 +125,7 @@ private:
 
 	bool	m_bPropertyChanging;
 	bool	m_bManualShowHideFilter;
+	bool	m_bNoCorrectMenuPositon;
 	CPoint	m_ptLastOffset;
 
 	std::vector<std::pair<HWND, CRect>>	m_defaultHeaderPartPosition;

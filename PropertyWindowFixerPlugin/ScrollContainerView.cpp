@@ -65,7 +65,7 @@ LRESULT CALLBACK GetMsgProc(
 // CScrollConteinerView
 
 CScrollConteinerView::CScrollConteinerView() : m_bDebug(false)
-	, m_rcFixedWindow(CPoint(), CSize(530, 550)), m_bPropertyChanging(false), m_bManualShowHideFilter(false)
+	, m_rcFixedWindow(CPoint(), CSize(530, 550)), m_bPropertyChanging(false), m_bManualShowHideFilter(false), m_bNoCorrectMenuPositon(false)
 {
 }
 
@@ -236,6 +236,12 @@ void CScrollConteinerView::OnTimer(UINT_PTR nIDEvent)
 	}
 }
 
+LRESULT CScrollConteinerView::OnFilterPlus(WORD, WORD, HWND, BOOL&)
+{
+	m_bNoCorrectMenuPositon = true;
+	return DefWindowProc();
+}
+
 // 設定ダイアログは画面がスクロールされていることを知らないので、
 // 正しいフィルターの右クリックメニュー出すためにオフセットを加える
 LRESULT CScrollConteinerView::OnRButtonDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
@@ -257,6 +263,11 @@ LRESULT CScrollConteinerView::OnInitMenu(UINT, WPARAM, LPARAM, BOOL&)
 // そのままではオフセット分だけ表示位置がずれるので、カーソルの位置にメニューを移動させる
 LRESULT CScrollConteinerView::OnDelayCorrectMenuPosition(UINT, WPARAM, LPARAM, BOOL&)
 {
+	if (m_bNoCorrectMenuPositon) {
+		m_bNoCorrectMenuPositon = false;
+		return 0;
+	}
+
 	HWND hwnd = ::FindWindow(L"#32768", NULL);
 	ATLASSERT(hwnd);
 	if (hwnd == NULL) {
