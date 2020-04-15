@@ -313,6 +313,10 @@ void CScrollConteinerView::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
 		// ウィンドウサイズ固定化
 		lpWndPos->cx = m_rcFixedWindow.Width();
 		lpWndPos->cy = m_rcFixedWindow.Height();
+
+		if (lpWndPos->cx != m_sizeClient.cx || lpWndPos->cy != m_sizeClient.cy) {
+
+		}
 	}
 }
 
@@ -320,13 +324,15 @@ void CScrollConteinerView::OnWindowPosChanged(LPWINDOWPOS lpWndPos)
 {
 	INFO_LOG << L"OnWindowPosChanged cx: " << lpWndPos->cx << L" cy: " << lpWndPos->cy;
 
-	// スクロールバーの再描画のため
-	CRect rc;
-	GetWindowRect(&rc);
-	DoSize(rc.Width(), rc.Height());
+	if (lpWndPos->cx != m_sizeClient.cx || lpWndPos->cy != m_sizeClient.cy) {
+		// スクロールバーの再描画のため
+		CRect rc;
+		GetWindowRect(&rc);
+		DoSize(rc.Width(), rc.Height());
 
-	// CS_VREDRAWを外したのでリサイズ時に子ウィンドウの描画を指示しなければならない
-	RedrawWindow(nullptr, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
+		// CS_VREDRAWを外したのでリサイズ時に子ウィンドウの描画を指示しなければならない
+		RedrawWindow(nullptr, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
+	}
 }
 
 void CScrollConteinerView::OnPropertyWindowCommand(UINT uNotifyCode, int nID, CWindow wndCtl)
@@ -376,7 +382,7 @@ LRESULT CScrollConteinerView::OnDelayPropertyChanged(UINT, WPARAM, LPARAM, BOOL&
 	m_bPropertyChanging = false;
 	//SetScrollOffset(m_ptLastOffset);
 	if (m_bManualShowHideFilter || m_bAlwaysRestoreScrollPos) {
-		SetScrollOffset(m_ptLastOffset);
+		SetScrollOffset(m_ptLastOffset, FALSE);
 		m_bManualShowHideFilter = false;
 	}
 
