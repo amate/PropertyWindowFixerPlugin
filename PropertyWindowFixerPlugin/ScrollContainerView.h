@@ -38,6 +38,7 @@ public:
 	BOOL SubclassWindow();
 	void UnsubclassWindow();
 
+	// Overrides
 	BOOL PreTranslateMessage(MSG* pMsg)
 	{
 		pMsg;
@@ -50,6 +51,9 @@ public:
 	}
 
 	void DoScroll(int nType, int nScrollCode, int& cxyOffset, int cxySizeAll, int cxySizePage, int cxySizeLine);
+
+	LRESULT DefWindowProc();
+	LRESULT DefWindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	BEGIN_MSG_MAP_EX(CScrollConteinerView)
 		MSG_WM_CREATE(OnCreate)
@@ -130,6 +134,9 @@ private:
 
 	std::vector<std::pair<HWND, CRect>>	m_defaultHeaderPartPosition;
 	int		m_barBottom;
+
+	LONG_PTR m_pfnDefWndProc = 0;
+	LONG_PTR m_pfnSubWndProc = 0;
 
 	// config
 	int		m_cyScrollLine = 60;

@@ -61,6 +61,24 @@ LRESULT CALLBACK GetMsgProc(
 	return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
 }
 
+
+LRESULT CALLBACK MySubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam,
+	LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	auto pThis = (CScrollConteinerView*)uIdSubclass;
+
+	_ATL_MSG msg(hWnd, uMsg, wParam, lParam);
+	pThis->m_pCurrentMsg = &msg;
+
+	LRESULT lResult = 0;
+	BOOL processed = pThis->ProcessWindowMessage(hWnd, uMsg, wParam, lParam, lResult);
+	if (processed) {
+		return lResult;
+	} else {
+		return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	}
+}
+
 ///////////////////////////////////////////////////////////////////
 // CScrollConteinerView
 
@@ -81,8 +99,12 @@ BOOL CScrollConteinerView::SubclassWindow()
 
 	//hwnd.ModifyStyleEx(0, WS_EX_COMPOSITED);
 	//BOOL bb = hwnd.ShowScrollBar(SB_VERT);
-	BOOL b = __super::SubclassWindow(hwnd);	
+	//BOOL b = __super::SubclassWindow(hwnd);	
+	m_pfnDefWndProc = ::GetWindowLongPtr(hwnd, GWLP_WNDPROC);
+	BOOL b = ::SetWindowSubclass(hwnd, MySubclassProc, (UINT_PTR)this, 0);
 	ATLASSERT(b);
+	m_hWnd = hwnd;
+	m_pfnSubWndProc = ::GetWindowLongPtr(hwnd, GWLP_WNDPROC);
 
 	{
 		auto ptree = ptreeWrapper::LoadIniPtree(kConfigFileName);
@@ -161,7 +183,11 @@ void CScrollConteinerView::UnsubclassWindow()
 
 	SetScrollOffset(0, 0);
 
-	CWindow hwnd = __super::UnsubclassWindow();
+	BOOL b = ::RemoveWindowSubclass(m_hWnd, MySubclassProc, (UINT_PTR)this);
+	ATLASSERT(b);
+	//CWindow hwnd = __super::UnsubclassWindow();
+	CWindow hwnd = m_hWnd;
+	m_hWnd = NULL;
 	const int scrollbarWidth = ::GetSystemMetrics(SM_CXVSCROLL);
 	rc.right = rc.left + m_sizeAll.cx + scrollbarWidth;
 	rc.bottom = rc.top + m_sizeAll.cy + scrollbarWidth - m_cyMargin;
@@ -178,6 +204,26 @@ void CScrollConteinerView::DoScroll(int nType, int nScrollCode, int& cxyOffset, 
 		__super::DoScroll(nType, nScrollCode, cxyOffset, cxySizeAll, cxySizePage, cxySizeLine);
 	}
 	return ;
+}
+
+LRESULT CScrollConteinerView::DefWindowProc()
+{
+	const _ATL_MSG* pMsg = m_pCurrentMsg;
+	LRESULT lRes = 0;
+	if (pMsg != NULL) {
+		lRes = DefWindowProc(pMsg->message, pMsg->wParam, pMsg->lParam);
+	}
+	return lRes;
+}
+
+LRESULT CScrollConteinerView::DefWindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	const _ATL_MSG* pMsg = m_pCurrentMsg;
+	LRESULT lRes = 0;
+	if (pMsg != NULL) {
+		lRes = ::DefSubclassProc(pMsg->hwnd, uMsg, wParam, lParam);
+	}
+	return lRes;
 }
 
 
@@ -371,6 +417,22 @@ LRESULT CScrollConteinerView::OnSetText(UINT, WPARAM, LPARAM, BOOL&)
 
 	m_bPropertyChanging = true;
 	PostMessage(WM_DELAY_PROPERTYCHANGED);
+
+	// スクリプト並び替えプラググインによる 
+	// 設定ダイアログへのユーザーフィルタドロップによって、
+	// サブクラス化が解除された後、サブクラス化を復帰させる処理
+	std::thread([this]() {
+		enum { kSleepInterval = 100, kMaxRetryCount = 10 };
+		for (int i = 0; i < kMaxRetryCount; ++i) {
+			LONG_PTR pfnWndProc = ::GetWindowLongPtr(m_hWnd, GWLP_WNDPROC);
+			if (m_pfnDefWndProc == pfnWndProc) {	// デフォルト(オリジナル)のWindowProcへ戻ってしまった
+				INFO_LOG << L"Restore subclass";
+				::SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, (LONG_PTR)m_pfnSubWndProc);	// restore
+				break;
+			}
+			::Sleep(kSleepInterval);
+		}
+		}).detach();
 
 	return LRESULT();
 }
