@@ -253,7 +253,7 @@ void CScrollConteinerView::OnClose()
 
 void CScrollConteinerView::OnPaint(CDCHandle dc)
 {
-	if (m_ptOffset.y < m_barBottom) {
+	if (!m_bPropertyChanging && m_ptOffset.y < m_barBottom) {
 		DefWindowProc();
 	} else {
 		CPaintDC dc(m_hWnd);
@@ -267,8 +267,11 @@ void CScrollConteinerView::OnTimer(UINT_PTR nIDEvent)
 {
 	switch (nIDEvent) {
 	case kDelaySwitchManualShowHideTimerId:
-		m_bManualShowHideFilter = false;
 		KillTimer(kDelaySwitchManualShowHideTimerId);
+
+		if (!m_bPropertyChanging) {
+			m_bManualShowHideFilter = false;
+		}
 		break;
 
 	case kDelayRestoreWindowId:
@@ -276,6 +279,22 @@ void CScrollConteinerView::OnTimer(UINT_PTR nIDEvent)
 		KillTimer(kDelayRestoreWindowId);
 		break;
 
+	case kDelayPropertyChanged2Id:
+		KillTimer(kDelayPropertyChanged2Id);
+
+		{
+			m_bPropertyChanging = false;
+
+			// 上の青い部分を描画させる
+			CRect rcBar = { 0, 0, 1000, m_barBottom };
+			InvalidateRect(rcBar, FALSE);
+
+			if (m_bManualShowHideFilter || m_bAlwaysRestoreScrollPos) {
+				SetScrollOffset(m_ptLastOffset, TRUE);
+				m_bManualShowHideFilter = false;
+			}
+		}
+		break;
 
 	default:
 		break;
@@ -332,9 +351,14 @@ LRESULT CScrollConteinerView::OnDelayCorrectMenuPosition(UINT, WPARAM, LPARAM, B
 	if (mni.rcWork.bottom < (ptCursor.y + rcMenu.Height())) {
 		// メニューの底が画面下を貫く場合、メニューを反転させてあげる
 		ptCursor.y -= rcMenu.Height();
+
+		if (ptCursor.y < mni.rcWork.top) {
+			// もし反転したメニューがモニターの上を超えるなら、モニターの上を移動の上限にする
+			ptCursor.y = mni.rcWork.top;
+		}
 	}
 
-	::SetWindowPos(hwnd, NULL, ptCursor.x, ptCursor.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+	::SetWindowPos(hwnd, NULL, rcMenu.left, ptCursor.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 	return 0;
 }
 
@@ -441,12 +465,22 @@ LRESULT CScrollConteinerView::OnDelayPropertyChanged(UINT, WPARAM, LPARAM, BOOL&
 {
 	INFO_LOG << L"OnDelayPropertyChanged";
 
-	m_bPropertyChanging = false;
+	//m_bPropertyChanging = false;
+
 	//SetScrollOffset(m_ptLastOffset);
-	if (m_bManualShowHideFilter || m_bAlwaysRestoreScrollPos) {
-		SetScrollOffset(m_ptLastOffset, FALSE);
-		m_bManualShowHideFilter = false;
-	}
+	// 
+	//std::thread([this]() {
+	//	::Sleep(3 * 1000);
+	//	if (m_bManualShowHideFilter || m_bAlwaysRestoreScrollPos) {
+	//		SetScrollOffset(m_ptLastOffset, FALSE);
+	//		m_bManualShowHideFilter = false;
+	//	}
+	//	}).detach();
+	SetTimer(kDelayPropertyChanged2Id, kDelayPropertyChanged2Interval);
+	//if (m_bManualShowHideFilter || m_bAlwaysRestoreScrollPos) {
+	//	SetScrollOffset(m_ptLastOffset, FALSE);
+	//	m_bManualShowHideFilter = false;
+	//}
 
 	//PostMessage(WM_DELAY_INVALIDATERECT);
 

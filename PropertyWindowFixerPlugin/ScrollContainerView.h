@@ -24,6 +24,8 @@ public:
 		kDelaySwitchManualShowHideTimerInterval = 100,
 		kDelayRestoreWindowId = 2,
 		kDelayRestoreWindowInterval = 100,
+		kDelayPropertyChanged2Id = 3,
+		kDelayPropertyChanged2Interval = 50,
 		
 		kEdgeRightHeaderPartId = 0x453,
 		kEvalcxMargin = 5,
