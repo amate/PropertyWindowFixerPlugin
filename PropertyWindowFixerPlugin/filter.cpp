@@ -9,7 +9,7 @@
 #include "ScrollContainerView.h"
 
 #define PLUGIN_NAME "設定ダイアログ画面サイズ固定化プラグイン"
-#define PLUGIN_VERSION "2.4"
+#define PLUGIN_VERSION "2.5"
 
 
 #define	WINDOW_W		540

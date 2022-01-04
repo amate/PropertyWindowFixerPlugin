@@ -291,6 +291,8 @@ void CScrollConteinerView::OnTimer(UINT_PTR nIDEvent)
 
 			if (m_bManualShowHideFilter || m_bAlwaysRestoreScrollPos) {
 				SetScrollOffset(m_ptLastOffset, TRUE);
+				RedrawWindow(nullptr, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
+
 				m_bManualShowHideFilter = false;
 			}
 		}
