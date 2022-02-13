@@ -130,6 +130,9 @@ private:
 	CRect	m_rcFixedWindow;
 
 	bool	m_bPropertyChanging;
+	bool	m_bPropertyChanged;
+	std::vector<std::pair<HWND, CRect>>	m_prevPartPosition;
+
 	bool	m_bManualShowHideFilter;
 	bool	m_bNoCorrectMenuPositon;
 	CPoint	m_ptLastOffset;

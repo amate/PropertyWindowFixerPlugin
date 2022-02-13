@@ -83,7 +83,7 @@ LRESULT CALLBACK MySubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 // CScrollConteinerView
 
 CScrollConteinerView::CScrollConteinerView() : m_bDebug(false)
-	, m_rcFixedWindow(CPoint(), CSize(530, 550)), m_bPropertyChanging(false), m_bManualShowHideFilter(false), m_bNoCorrectMenuPositon(false)
+	, m_rcFixedWindow(CPoint(), CSize(530, 550)), m_bPropertyChanging(false), m_bPropertyChanged(false), m_bManualShowHideFilter(false), m_bNoCorrectMenuPositon(false)
 {
 }
 
@@ -285,6 +285,17 @@ void CScrollConteinerView::OnTimer(UINT_PTR nIDEvent)
 		{
 			m_bPropertyChanging = false;
 
+			{	// パーツのデフォルト位置を保存
+				m_prevPartPosition.clear();
+				HWND hwndChild = ::GetWindow(m_hWnd, GW_CHILD);
+				do {
+					const CRect rcPart = _GetWindowRelativePositon(hwndChild);
+					if (::IsWindowVisible(hwndChild)) {
+						m_prevPartPosition.emplace_back(hwndChild, rcPart);
+					}
+				} while (hwndChild = ::GetWindow(hwndChild, GW_HWNDNEXT));
+			}
+
 			// 上の青い部分を描画させる
 			CRect rcBar = { 0, 0, 1000, m_barBottom };
 			InvalidateRect(rcBar, FALSE);
@@ -372,6 +383,7 @@ void CScrollConteinerView::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
 	// ウィンドウサイズ変更時
 	if ((lpWndPos->flags & SWP_NOSIZE) == 0) {
 		INFO_LOG << L"OnWindowPosChanging cx: " << lpWndPos->cx << L" cy: " << lpWndPos->cy;
+		m_bPropertyChanged = true;
 
 		if (m_bPropertyChanging) {
 			if (!GetDlgItem(kEdgeRightHeaderPartId).IsWindowVisible()) {
@@ -395,6 +407,8 @@ void CScrollConteinerView::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
 void CScrollConteinerView::OnWindowPosChanged(LPWINDOWPOS lpWndPos)
 {
 	INFO_LOG << L"OnWindowPosChanged cx: " << lpWndPos->cx << L" cy: " << lpWndPos->cy;
+
+	m_bPropertyChanged = false;
 
 	if (lpWndPos->cx != m_sizeClient.cx || lpWndPos->cy != m_sizeClient.cy) {
 		// スクロールバーの再描画のため
@@ -466,6 +480,14 @@ LRESULT CScrollConteinerView::OnSetText(UINT, WPARAM, LPARAM, BOOL&)
 LRESULT CScrollConteinerView::OnDelayPropertyChanged(UINT, WPARAM, LPARAM, BOOL&)
 {
 	INFO_LOG << L"OnDelayPropertyChanged";
+
+	if (m_bPropertyChanged) {
+		// OnWindowPosChangingの後に OnWindowPosChangedが呼ばれていない
+		// 同一オブジェクトの中間点切り替え時などで、拡張編集によって設定ダイアログ内のパーツ位置がリセットされないので、自分でリセットを行う
+		for (const auto& defaultPart : m_prevPartPosition) {
+			CWindow(defaultPart.first).MoveWindow(defaultPart.second, FALSE);
+		}
+	}
 
 	//m_bPropertyChanging = false;
 
@@ -589,7 +611,7 @@ void CScrollConteinerView::_CalcAndChangeScrollSize()
 	// スクロールさせることによって、疑似的にResetOffsetがfalseの状態を再現する
 
 	for (const auto& defaultPart : m_defaultHeaderPartPosition) {
-		CWindow(defaultPart.first).MoveWindow(defaultPart.second);
+		CWindow(defaultPart.first).MoveWindow(defaultPart.second, FALSE);
 	}
 	m_ptLastOffset = m_ptOffset;
 	m_dwExtendedStyle &= ~SCRL_SCROLLCHILDREN;
